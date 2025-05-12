@@ -6,6 +6,8 @@
 // l : h - 1, r : h
 // l : 0, r : 0
 
+// 첫 번째 노드는 무조건 루트의 왼쪽이여야 됨.
+
 typedef struct _Node{
     struct _Node* l;
     struct _Node* r;
@@ -23,7 +25,7 @@ int avlcmp(int a, int b){
     else{ return 0; }
 }
 Node* find(AVLTree *avl, int key){
-    Node* p = avl->root;
+    Node* p = avl->root->l;
 
     while (p != NULL){
         int cmp = avlcmp(key, p->k);
@@ -73,10 +75,12 @@ Node* _rotateRR(Node* x){
     }
     
     y->par = x->par;
-    if (x == x->par->l){
-        x->par->l = y;
-    } else {
-        x->par->r = y;
+    if(x->par != NULL){
+        if (x == x->par->l){
+            x->par->l = y;
+        } else {
+            x->par->r = y;
+        }
     }
     
     y->l = x;
@@ -132,27 +136,25 @@ Node* balanceR(Node* par){
 // 
 // recursive로 구현하는 이유는 bottom-up을 구현하기 편하기 때문.
 Node* insert(AVLTree* avl, int key){
-    Node* par = avl->root;
-    
 
-    if (par == NULL){
-        return par = createNode(key);
-    }
-    
+    Node* par = avl->root;
     Node* cur = par->l;
+
     while (cur != NULL){
         int cmp = avlcmp(key, cur->k);
-        
+
+        par = cur;
+
         if(cmp < 0) { cur = cur->l; }
         else if (cmp > 0) { cur = cur->r; }
         else { return cur; } // do not allow duplicate
-
-        par = cur;
     }
 
     Node* ret;
     ret = cur = createNode(key);
+    cur->par = par;
     
+    // 첫 번째 노드의 시작은 루트의 left에 존재해야 됨.
     if (par == avl->root || avlcmp(key, par->k) < 0){
         par->l = cur;
     }
@@ -160,7 +162,7 @@ Node* insert(AVLTree* avl, int key){
         par->r = cur;
     }
 
-    while (cur != avl->root){
+    while (cur != avl->root->l){
         if (cur == par->l){
             if (par->bf == 1){
                 par->bf--;
@@ -190,9 +192,12 @@ Node* insert(AVLTree* avl, int key){
     return ret;
 }
 void initAVLTree(AVLTree* avl){
-    avl->root = NULL;
+    avl->root = createNode(0);
 }
 AVLTree* makeAVLTree(){
+    // root에 대한 sentinel node 
+    // 이거 안 쓰면 rotation 연산에 의해 root 위치도 변경되는 것을 고려해야 됨.
+    // root는 수정 불가능해야됨.
     AVLTree* t = (AVLTree*)malloc(sizeof(AVLTree));
     initAVLTree(t);
 
@@ -208,7 +213,6 @@ int main(){
     insert(avl, 4);
     insert(avl, 5);
 
-    Node* p = find(avl, 1);
+    Node* p = find(avl, 4);
     printf("%d", avl->root);
-    
 }
